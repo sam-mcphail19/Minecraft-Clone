@@ -1,6 +1,10 @@
+package graphics;
+
 import core.Mesh;
 import core.Transform;
 import core.Vertex;
+import graphics.texture.Texture;
+import graphics.texture.TextureAtlasUtils;
 import java.util.ArrayList;
 import java.util.List;
 import math.vector.Vector2;

@@ -1,3 +1,5 @@
+package graphics.texture;
+
 import math.vector.Vector2;
 
 public class TextureAtlasUtils {
@@ -7,7 +9,7 @@ public class TextureAtlasUtils {
     public static final double NORMALIZED_TEXTURE_SIZE = 1d / TEXTURE_SIZE;
 
     public static core.Texture getTexture() {
-        return core.Texture.load("src/main/resources/textureAtlas.png");
+        return core.Texture.load("res/textureAtlas.png");
     }
 
     public static Vector2 getTextureAtlasCoords(Texture texture) {

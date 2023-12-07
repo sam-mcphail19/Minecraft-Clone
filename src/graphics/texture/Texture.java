@@ -1,3 +1,5 @@
+package graphics.texture;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
