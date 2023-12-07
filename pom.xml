@@ -16,8 +16,21 @@
 
     <dependencies>
         <dependency>
-            <groupId></groupId>
+            <groupId>org.example</groupId>
             <artifactId>Java-Game-Engine</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.28</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.1.2-jre</version>
         </dependency>
     </dependencies>
 
