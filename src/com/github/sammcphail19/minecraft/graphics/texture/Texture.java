@@ -1,4 +1,4 @@
-package graphics.texture;
+package com.github.sammcphail19.minecraft.graphics.texture;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

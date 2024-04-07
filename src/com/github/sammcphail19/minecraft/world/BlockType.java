@@ -1,6 +1,6 @@
-package world;
+package com.github.sammcphail19.minecraft.world;
 
-import graphics.texture.Texture;
+import com.github.sammcphail19.minecraft.graphics.texture.Texture;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

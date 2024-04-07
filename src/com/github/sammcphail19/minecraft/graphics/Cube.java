@@ -1,14 +1,15 @@
-package graphics;
+package com.github.sammcphail19.minecraft.graphics;
 
-import core.Mesh;
-import core.Transform;
-import core.Vertex;
-import graphics.texture.Texture;
-import graphics.texture.TextureAtlasUtils;
+import com.github.sammcphail19.engine.core.Mesh;
+import com.github.sammcphail19.engine.core.Transform;
+import com.github.sammcphail19.engine.core.Vertex;
+
+import com.github.sammcphail19.minecraft.graphics.texture.Texture;
+import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlasUtils;
 import java.util.ArrayList;
 import java.util.List;
-import math.vector.Vector2;
-import math.vector.Vector3;
+import com.github.sammcphail19.engine.vector.Vector2;
+import com.github.sammcphail19.engine.vector.Vector3;
 
 public class Cube extends Mesh {
     private static final int VERTEX_COUNT = 24;

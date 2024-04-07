@@ -1,6 +1,6 @@
-package graphics.texture;
+package com.github.sammcphail19.minecraft.graphics.texture;
 
-import math.vector.Vector2;
+import com.github.sammcphail19.engine.vector.Vector2;
 
 public class TextureAtlasUtils {
     public static final int TEXTURE_ATLAS_SIZE = 256;
@@ -8,8 +8,8 @@ public class TextureAtlasUtils {
     public static final int TEXTURES_PER_ROW = TEXTURE_ATLAS_SIZE / TEXTURE_SIZE;
     public static final double NORMALIZED_TEXTURE_SIZE = 1d / TEXTURE_SIZE;
 
-    public static core.Texture getTexture() {
-        return core.Texture.load("res/textureAtlas.png");
+    public static com.github.sammcphail19.engine.core.Texture getTexture() {
+        return com.github.sammcphail19.engine.core.Texture.load("res/textureAtlas.png");
     }
 
     public static Vector2 getTextureAtlasCoords(Texture texture) {
