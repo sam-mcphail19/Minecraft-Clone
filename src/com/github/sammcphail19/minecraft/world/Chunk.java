@@ -4,6 +4,7 @@ import com.github.sammcphail19.engine.core.Mesh;
 import com.github.sammcphail19.engine.core.Transform;
 import com.github.sammcphail19.engine.core.Vertex;
 
+import com.github.sammcphail19.engine.vector.Vector3I;
 import com.github.sammcphail19.minecraft.graphics.Cube;
 import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlasUtils;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import com.github.sammcphail19.engine.vector.Vector3;
 @RequiredArgsConstructor
 public class Chunk {
     public static final int CHUNK_SIZE = 16;
-    private final Vector3 origin;
+    private final Vector3I origin;
     private final BlockType[] blocks = new BlockType[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * World.WORLD_HEIGHT];
     @Getter
     private Mesh mesh;
@@ -36,7 +37,7 @@ public class Chunk {
                     }
                     Vector3 blockPos = new Vector3(x, y, z);
                     Transform transform = Transform.builder()
-                        .translation(blockPos.add(origin))
+                        .translation(blockPos.add(origin.toVector3()))
                         .build();
                     Cube cube = new Cube(transform, block.getTexture());
 
@@ -50,7 +51,7 @@ public class Chunk {
             }
         }
         Transform transform = Transform.builder()
-            .translation(origin)
+            .translation(origin.toVector3())
             .build();
         this.mesh = new Mesh(vertices, indices.stream().mapToInt(i -> i).toArray(), transform, TextureAtlasUtils.getTexture());
     }
@@ -60,7 +61,19 @@ public class Chunk {
     }
 
     public BlockType getBlock(int x, int y, int z) {
-        return this.blocks[to1DIndex(x, y, z)];
+        try {
+            return this.blocks[to1DIndex(x, y, z)];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.err.println("ArrayIndexOutOfBoundsException for " + "("+ x + "," + y + ","+ z + ")");
+            throw e;
+        }
+    }
+
+    public BlockType getBlock(Vector3 pos) {
+        int x = (int) pos.getX();
+        int y = (int) pos.getY();
+        int z = (int) pos.getZ();
+        return getBlock(x, y, z);
     }
 
     private int to1DIndex(int x, int y, int z) {
