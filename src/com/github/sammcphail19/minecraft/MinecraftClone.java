@@ -2,10 +2,12 @@ package com.github.sammcphail19.minecraft;
 
 import com.github.sammcphail19.engine.Application;
 import com.github.sammcphail19.engine.core.Input;
+import com.github.sammcphail19.engine.vector.Vector2;
 import com.github.sammcphail19.engine.vector.Vector3;
 import com.github.sammcphail19.engine.vector.Vector3I;
 import com.github.sammcphail19.minecraft.world.Chunk;
 import com.github.sammcphail19.minecraft.world.World;
+import com.github.sammcphail19.minecraft.world.WorldGenerator;
 import lombok.Getter;
 import org.lwjgl.glfw.GLFW;
 
@@ -28,13 +30,15 @@ public class MinecraftClone extends Application {
 
         setCamera(player.getCamera());
 
-        this.world = new World(player);
-        for (int x = 0; x < 3; x++) {
-            for (int z = 0; z < 3; z++) {
-                Chunk chunk = world.generateChunk(new Vector3I(x * Chunk.CHUNK_SIZE, 0, z * Chunk.CHUNK_SIZE));
-                submitMesh(chunk.getMesh());
-            }
-        }
+        this.world = new World(new WorldGenerator(), player);
+        world.generate();
+        world.getChunks().values().forEach(chunk -> submitMesh(chunk.getMesh()));
+
+        int height = world.getHeightAtPos(player.getPos());
+        Vector3 newPos = new Vector3(player.getPos().getX(), height + 1, player.getPos().getZ());
+        player.setPos(newPos);
+
+        Chunk chunk = world.getChunks().get(new Vector3I());
     }
 
     @Override

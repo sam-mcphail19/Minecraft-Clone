@@ -12,6 +12,7 @@ import org.lwjgl.glfw.GLFW;
 public class Player {
     private static final double MOUSE_SENSITIVITY = 0.24;
     private static final double MOVEMENT_SPEED = 0.15;
+    private static final double CREATIVE_MOVEMENT_SPEED = 0.45;
     private static final double JUMP_SPEED = 0.25;
 
     private static final double GRAVITY = 0.01;
@@ -30,30 +31,12 @@ public class Player {
     private long lastUpdateTime = 0;
     private PlayerControl lastPlayerControl;
     private boolean isJumping = false;
+    private boolean inCreativeMode = true;
 
     public Player(Vector3 pos) {
         this.pos = pos;
         this.camera = new Camera(pos.add(cameraPosDiff), pitch, yaw);
         this.collider = new BoxCollider(pos, size);
-    }
-
-    public void getInput() {
-        lastPlayerControl = getPlayerControl();
-
-        velocity.setX(lastPlayerControl.getMovement().getX());
-        velocity.setZ(lastPlayerControl.getMovement().getZ());
-        velocity.setY(velocity.getY() + lastPlayerControl.getMovement().getY());
-
-        if (isJumping) {
-            velocity = velocity.subtract(new Vector3(0, GRAVITY, 0));
-        }
-
-        addPitch(lastPlayerControl.getPitch());
-        addYaw(lastPlayerControl.getYaw());
-
-        camera.setPitch(pitch);
-        camera.setYaw(yaw);
-        camera.setPos(pos.add(cameraPosDiff));
     }
 
     public void update() {
@@ -63,6 +46,30 @@ public class Player {
     public void setPos(Vector3 pos) {
         this.pos = pos;
         collider.setPos(this.pos);
+    }
+
+    private void getInput() {
+        if (inCreativeMode) {
+            lastPlayerControl = getCreativePlayerControl();
+            velocity.setY(lastPlayerControl.getMovement().getY());
+        } else {
+            lastPlayerControl = getPlayerControl();
+            velocity = velocity.add(new Vector3(0, lastPlayerControl.getMovement().getY(), 0));
+
+            if (isJumping) {
+                velocity = velocity.subtract(new Vector3(0, GRAVITY, 0));
+            }
+        }
+
+        velocity.setX(lastPlayerControl.getMovement().getX());
+        velocity.setZ(lastPlayerControl.getMovement().getZ());
+
+        addPitch(lastPlayerControl.getPitch());
+        addYaw(lastPlayerControl.getYaw());
+
+        camera.setPitch(pitch);
+        camera.setYaw(yaw);
+        camera.setPos(pos.add(cameraPosDiff));
     }
 
     private PlayerControl getPlayerControl() {
@@ -119,22 +126,22 @@ public class Player {
 
         Vector3 movement = new Vector3();
         if (Input.isKeyPressed(GLFW.GLFW_KEY_W)) {
-            movement = movement.add(viewDir.multiply(MOVEMENT_SPEED));
+            movement = movement.add(viewDir.multiply(CREATIVE_MOVEMENT_SPEED));
         }
         if (Input.isKeyPressed(GLFW.GLFW_KEY_A)) {
-            movement = movement.add(strafeDir.multiply(-MOVEMENT_SPEED));
+            movement = movement.add(strafeDir.multiply(-CREATIVE_MOVEMENT_SPEED));
         }
         if (Input.isKeyPressed(GLFW.GLFW_KEY_S)) {
-            movement = movement.add(viewDir.multiply(-MOVEMENT_SPEED));
+            movement = movement.add(viewDir.multiply(-CREATIVE_MOVEMENT_SPEED));
         }
         if (Input.isKeyPressed(GLFW.GLFW_KEY_D)) {
-            movement = movement.add(strafeDir.multiply(MOVEMENT_SPEED));
+            movement = movement.add(strafeDir.multiply(CREATIVE_MOVEMENT_SPEED));
         }
         if (Input.isKeyPressed(GLFW.GLFW_KEY_SPACE)) {
-            movement = movement.add(Vector3.yAxis());
+            movement = movement.add(Vector3.yAxis().multiply(CREATIVE_MOVEMENT_SPEED));
         }
         if (Input.isKeyPressed(GLFW.GLFW_KEY_LEFT_CONTROL)) {
-            movement = movement.add(Vector3.yAxis().multiply(-1));
+            movement = movement.add(Vector3.yAxis().multiply(-CREATIVE_MOVEMENT_SPEED));
         }
 
         return PlayerControl.builder()

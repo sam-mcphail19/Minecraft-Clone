@@ -4,6 +4,7 @@ import com.github.sammcphail19.engine.core.Mesh;
 import com.github.sammcphail19.engine.core.Transform;
 import com.github.sammcphail19.engine.core.Vertex;
 
+import com.github.sammcphail19.engine.vector.Vector2;
 import com.github.sammcphail19.engine.vector.Vector3I;
 import com.github.sammcphail19.minecraft.graphics.Cube;
 import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlasUtils;
@@ -18,6 +19,7 @@ import com.github.sammcphail19.engine.vector.Vector3;
 @RequiredArgsConstructor
 public class Chunk {
     public static final int CHUNK_SIZE = 16;
+    @Getter
     private final Vector3I origin;
     private final BlockType[] blocks = new BlockType[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * World.WORLD_HEIGHT];
     @Getter
@@ -56,6 +58,10 @@ public class Chunk {
         this.mesh = new Mesh(vertices, indices.stream().mapToInt(i -> i).toArray(), transform, TextureAtlasUtils.getTexture());
     }
 
+    public Vector3I getChunkCoord() {
+        return new Vector3I(origin.getX() / CHUNK_SIZE, 0, origin.getZ() / CHUNK_SIZE);
+    }
+
     public void putBlock(int x, int y, int z, BlockType blockType) {
         this.blocks[to1DIndex(x, y, z)] = blockType;
     }
@@ -64,9 +70,22 @@ public class Chunk {
         try {
             return this.blocks[to1DIndex(x, y, z)];
         } catch (ArrayIndexOutOfBoundsException e) {
-            System.err.println("ArrayIndexOutOfBoundsException for " + "("+ x + "," + y + ","+ z + ")");
+            System.err.println("ArrayIndexOutOfBoundsException for " + "(" + x + "," + y + "," + z + ")");
             throw e;
         }
+    }
+
+    public int getHeightAtPos(Vector2 pos) {
+        int x = (int) pos.getX();
+        int z = (int) pos.getY();
+
+        for (int y = World.WORLD_HEIGHT - 1; y >= 0; y--) {
+            if (getBlock(x, y, z) != BlockType.AIR) {
+                return y;
+            }
+        }
+
+        return -1;
     }
 
     public BlockType getBlock(Vector3 pos) {

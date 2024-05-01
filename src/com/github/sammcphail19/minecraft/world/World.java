@@ -2,6 +2,7 @@ package com.github.sammcphail19.minecraft.world;
 
 import com.github.sammcphail19.engine.physics.BoxCollider;
 import com.github.sammcphail19.engine.physics.Collision;
+import com.github.sammcphail19.engine.vector.Vector2;
 import com.github.sammcphail19.engine.vector.Vector3;
 import com.github.sammcphail19.engine.vector.Vector3I;
 import com.github.sammcphail19.minecraft.Player;
@@ -11,21 +12,37 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 public class World {
     public static final int WORLD_HEIGHT = 128;
 
+    @Getter
     private final Map<Vector3I, Chunk> chunks = new HashMap<>();
 
+    private WorldGenerator worldGenerator;
     private Player player;
+
+    public void generate() {
+        for (int x = 0; x < 3; x++) {
+            for (int z = 0; z < 3; z++) {
+                Chunk chunk = worldGenerator.generateChunk(new Vector3I(x * Chunk.CHUNK_SIZE, 0, z * Chunk.CHUNK_SIZE));
+                chunks.put(chunk.getChunkCoord(), chunk);
+            }
+        }
+    }
 
     public void update() {
         player.update();
+
+        if (player.isInCreativeMode()) {
+            player.setPos(player.getPos().add(player.getVelocity()));
+            return;
+        }
 
         if (getBlockPosBelowPlayer(player) == null) {
             player.setJumping(true);
@@ -58,39 +75,6 @@ public class World {
         }
     }
 
-    public BlockType getBlockType(Vector3 blockPos) {
-        if (blockPos.getX() == 12) {
-            return BlockType.DIRT;
-        }
-        if (blockPos.getY() > WORLD_HEIGHT / 2.0) {
-            return BlockType.AIR;
-        }
-
-        if (blockPos.getY() == WORLD_HEIGHT / 2.0) {
-            return BlockType.DIRT;
-        }
-
-        return BlockType.STONE;
-    }
-
-    public Chunk generateChunk(Vector3I origin) {
-        origin.setY(0);
-        Chunk chunk = new Chunk(origin);
-
-        for (int x = 0; x < Chunk.CHUNK_SIZE; x++) {
-            for (int z = 0; z < Chunk.CHUNK_SIZE; z++) {
-                for (int y = 0; y < World.WORLD_HEIGHT; y++) {
-                    chunk.putBlock(x, y, z, getBlockType(new Vector3(x, y, z)));
-                }
-            }
-        }
-
-        chunk.updateMesh();
-        chunks.put(getChunkOrigin(origin), chunk);
-
-        return chunk;
-    }
-
     public List<Collision> checkPlayerCollisions(Player player) {
         Vector3 playerVelocity = player.getVelocity();
         double playerSpeed = Math.abs(playerVelocity.getX()) + Math.abs(playerVelocity.getY()) + Math.abs(playerVelocity.getZ());
@@ -104,13 +88,22 @@ public class World {
             BoxCollider collider = BoxCollider.cube(blockPos.toVector3());
             Collision collision = player.getCollider().dynamicBoxVsStaticBox(player.getVelocity(), collider);
 
-            if (!Objects.isNull(collision)) {
-                System.out.println("PlayerPos: " + player.getPos() + ", PlayerV: " + player.getVelocity() + ", BlockPos: " + blockPos + ", " + collision);
+            if (collision != null) {
                 collisions.add(collision);
             }
         }
 
         return collisions;
+    }
+
+    public int getHeightAtPos(Vector3 pos) {
+        Chunk chunk = getChunk(pos);
+        if (chunk == null) {
+            return -1;
+        }
+
+        Vector3 localPos = worldPosToLocalPos(pos);
+        return chunk.getHeightAtPos(new Vector2(localPos.getX(), localPos.getZ()));
     }
 
     private Set<Vector3I> getBlocksNearPlayer(Player player) {
@@ -135,15 +128,15 @@ public class World {
 
     // Get the chunk that contains the given world coordinate
     private Chunk getChunk(Vector3I pos) {
-        return chunks.get(getChunkOrigin(pos));
+        return chunks.get(getChunkCoord(pos));
     }
 
     private Chunk getChunk(Vector3 pos) {
         return getChunk(new Vector3I(pos));
     }
 
-    // Get the origin of the chunk that contains the given world coordinate
-    private Vector3I getChunkOrigin(Vector3I pos) {
+    // Get the chunk coord of the chunk that contains the given world coordinate
+    private Vector3I getChunkCoord(Vector3I pos) {
         int x = Math.floorDiv(pos.getX(), Chunk.CHUNK_SIZE);
         int z = Math.floorDiv(pos.getZ(), Chunk.CHUNK_SIZE);
 
@@ -163,11 +156,11 @@ public class World {
 
     private Vector3I getBlockPosBelowPlayer(Player player) {
         Chunk chunk = getChunk(player.getPos());
-        if (Objects.isNull(chunk)) {
+        if (chunk == null) {
             return null;
         }
 
-        for (int y = (int) player.getPos().getY(); y > 0; y--) {
+        for (int y = Math.min((int) player.getPos().getY(), WORLD_HEIGHT - 1); y > 0; y--) {
             Vector3 blockPos = worldPosToLocalPos(new Vector3(player.getPos().getX(), y, player.getPos().getZ()));
             BlockType block = chunk.getBlock(blockPos);
             if (!BlockType.AIR.equals(block)) {
