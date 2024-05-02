@@ -2,10 +2,7 @@ package com.github.sammcphail19.minecraft;
 
 import com.github.sammcphail19.engine.Application;
 import com.github.sammcphail19.engine.core.Input;
-import com.github.sammcphail19.engine.vector.Vector2;
 import com.github.sammcphail19.engine.vector.Vector3;
-import com.github.sammcphail19.engine.vector.Vector3I;
-import com.github.sammcphail19.minecraft.world.Chunk;
 import com.github.sammcphail19.minecraft.world.World;
 import com.github.sammcphail19.minecraft.world.WorldGenerator;
 import lombok.Getter;
@@ -37,8 +34,6 @@ public class MinecraftClone extends Application {
         int height = world.getHeightAtPos(player.getPos());
         Vector3 newPos = new Vector3(player.getPos().getX(), height + 1, player.getPos().getZ());
         player.setPos(newPos);
-
-        Chunk chunk = world.getChunks().get(new Vector3I());
     }
 
     @Override
@@ -51,7 +46,11 @@ public class MinecraftClone extends Application {
 
         if (timeBetweenTicks > MS_BETWEEN_TICKS) {
             lastTickTime = currentTime;
+
+            clearMeshes();
             world.update();
+            world.getVisibleChunks().forEach(chunk -> submitMesh(chunk.getMesh()));
+
             ticks++;
         }
 

@@ -20,6 +20,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class World {
     public static final int WORLD_HEIGHT = 128;
+    private final int CHUNK_RENDER_DISTANCE = 3;
 
     @Getter
     private final Map<Vector3I, Chunk> chunks = new HashMap<>();
@@ -30,8 +31,7 @@ public class World {
     public void generate() {
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 3; z++) {
-                Chunk chunk = worldGenerator.generateChunk(new Vector3I(x * Chunk.CHUNK_SIZE, 0, z * Chunk.CHUNK_SIZE));
-                chunks.put(chunk.getChunkCoord(), chunk);
+                generateChunk(new Vector3I(x, 0, z));
             }
         }
     }
@@ -39,12 +39,23 @@ public class World {
     public void update() {
         player.update();
 
+        // TODO: Do this on another thread
+        Vector3I currentChunkChunkCoord = getChunkCoord(new Vector3I(player.getPos()));
+        for (int x = -CHUNK_RENDER_DISTANCE; x < CHUNK_RENDER_DISTANCE; x++) {
+            for (int z = -CHUNK_RENDER_DISTANCE; z < CHUNK_RENDER_DISTANCE; z++) {
+                Vector3I pos = currentChunkChunkCoord.add(new Vector3I(x, 0, z));
+                if (!chunks.containsKey(pos)) {
+                    generateChunk(pos);
+                }
+            }
+        }
+
         if (player.isInCreativeMode()) {
             player.setPos(player.getPos().add(player.getVelocity()));
             return;
         }
 
-        if (getBlockPosBelowPlayer(player) == null) {
+        if (!player.isJumping() && playerIsFloating(player)) {
             player.setJumping(true);
         }
 
@@ -73,6 +84,13 @@ public class World {
         } else {
             player.setPos(player.getPos().add(player.getVelocity()));
         }
+    }
+
+    public List<Chunk> getVisibleChunks() {
+        Vector3 playerPos = new Vector3(player.getPos().getX(), 0, player.getPos().getZ());
+        return chunks.values().stream()
+            .filter(chunk -> playerPos.subtract(chunk.getCenter().toVector3()).magnitude() < CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE)
+            .toList();
     }
 
     public List<Collision> checkPlayerCollisions(Player player) {
@@ -104,6 +122,12 @@ public class World {
 
         Vector3 localPos = worldPosToLocalPos(pos);
         return chunk.getHeightAtPos(new Vector2(localPos.getX(), localPos.getZ()));
+    }
+
+    private void generateChunk(Vector3I chunkCoord) {
+        System.out.println("Generating chunk at " + chunkCoord);
+        Chunk chunk = worldGenerator.generateChunk(chunkCoord);
+        chunks.put(chunk.getChunkCoord(), chunk);
     }
 
     private Set<Vector3I> getBlocksNearPlayer(Player player) {
@@ -154,20 +178,26 @@ public class World {
         return worldPosToLocalPos(worldPos.toVector3());
     }
 
-    private Vector3I getBlockPosBelowPlayer(Player player) {
-        Chunk chunk = getChunk(player.getPos());
-        if (chunk == null) {
-            return null;
-        }
+    private boolean playerIsFloating(Player player) {
+        Vector3 playerPos = player.getPos();
 
-        for (int y = Math.min((int) player.getPos().getY(), WORLD_HEIGHT - 1); y > 0; y--) {
-            Vector3 blockPos = worldPosToLocalPos(new Vector3(player.getPos().getX(), y, player.getPos().getZ()));
-            BlockType block = chunk.getBlock(blockPos);
-            if (!BlockType.AIR.equals(block)) {
-                return new Vector3I((int) player.getPos().getX(), y, (int) player.getPos().getZ());
+        for (int y = Math.min((int) playerPos.getY(), WORLD_HEIGHT - 1); y > 0; y--) {
+            List<Vector3I> blockPositions = List.of(
+                new Vector3I((int) playerPos.getX(), y, (int) playerPos.getZ()),
+                new Vector3I((int) playerPos.getX(), y, (int) playerPos.getZ() + 1),
+                new Vector3I((int) playerPos.getX() + 1, y, (int) playerPos.getZ()),
+                new Vector3I((int) playerPos.getX() + 1, y, (int) playerPos.getZ() + 1)
+            );
+
+            for (Vector3I blockPos : blockPositions) {
+                Vector3 localPos = worldPosToLocalPos(blockPos);
+                BlockType block = getChunk(blockPos).getBlock(localPos);
+                if (!BlockType.AIR.equals(block)) {
+                    return true;
+                }
             }
         }
 
-        return null;
+        return false;
     }
 }

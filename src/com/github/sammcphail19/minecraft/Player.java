@@ -5,7 +5,9 @@ import com.github.sammcphail19.engine.core.Input;
 import com.github.sammcphail19.engine.physics.BoxCollider;
 import com.github.sammcphail19.engine.vector.Vector2;
 import com.github.sammcphail19.engine.vector.Vector3;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Setter;
 import org.lwjgl.glfw.GLFW;
 
 @Data
@@ -31,7 +33,7 @@ public class Player {
     private long lastUpdateTime = 0;
     private PlayerControl lastPlayerControl;
     private boolean isJumping = false;
-    private boolean inCreativeMode = true;
+    private boolean inCreativeMode = false;
 
     public Player(Vector3 pos) {
         this.pos = pos;

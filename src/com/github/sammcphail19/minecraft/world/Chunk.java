@@ -19,9 +19,10 @@ import com.github.sammcphail19.engine.vector.Vector3;
 @RequiredArgsConstructor
 public class Chunk {
     public static final int CHUNK_SIZE = 16;
+    private static final Vector3I CHUNK_HALF = new Vector3I(CHUNK_SIZE / 2, 0, CHUNK_SIZE / 2);
     @Getter
     private final Vector3I origin;
-    private final BlockType[] blocks = new BlockType[Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * World.WORLD_HEIGHT];
+    private final BlockType[] blocks = new BlockType[CHUNK_SIZE * CHUNK_SIZE * World.WORLD_HEIGHT];
     @Getter
     private Mesh mesh;
 
@@ -92,7 +93,16 @@ public class Chunk {
         int x = (int) pos.getX();
         int y = (int) pos.getY();
         int z = (int) pos.getZ();
+
+        if (x < 0 || x > CHUNK_SIZE || z < 0 || z > CHUNK_SIZE || y < 0 || y > World.WORLD_HEIGHT) {
+            return BlockType.AIR;
+        }
+
         return getBlock(x, y, z);
+    }
+
+    public Vector3I getCenter() {
+        return origin.add(CHUNK_HALF);
     }
 
     private int to1DIndex(int x, int y, int z) {
