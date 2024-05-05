@@ -3,6 +3,7 @@ package com.github.sammcphail19.minecraft;
 import com.github.sammcphail19.engine.Application;
 import com.github.sammcphail19.engine.core.Input;
 import com.github.sammcphail19.engine.vector.Vector3;
+import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlas;
 import com.github.sammcphail19.minecraft.world.World;
 import com.github.sammcphail19.minecraft.world.WorldGenerator;
 import lombok.Getter;
@@ -26,6 +27,8 @@ public class MinecraftClone extends Application {
         this.player = new Player(new Vector3(8, 65, 8));
 
         setCamera(player.getCamera());
+
+        TextureAtlas.initialize();
 
         this.world = new World(new WorldGenerator(), player);
         world.generate();

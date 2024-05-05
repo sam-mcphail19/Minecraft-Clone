@@ -5,7 +5,7 @@ import com.github.sammcphail19.engine.core.Transform;
 import com.github.sammcphail19.engine.core.Vertex;
 
 import com.github.sammcphail19.minecraft.graphics.texture.Texture;
-import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlasUtils;
+import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlas;
 import java.util.ArrayList;
 import java.util.List;
 import com.github.sammcphail19.engine.vector.Vector2;
@@ -99,7 +99,7 @@ public class Cube extends Mesh {
     };
 
     public Cube(Transform transform, Texture texture) {
-        super(createVertices(texture), indices, transform, TextureAtlasUtils.getTexture());
+        super(createVertices(texture), indices, transform, TextureAtlas.getTexture());
     }
 
     private static List<Vertex> createVertices(Texture texture) {
@@ -107,9 +107,10 @@ public class Cube extends Mesh {
 
         for (int i = 0; i < VERTEX_COUNT; i++) {
             Vector3 vertexPos = new Vector3(vertexPositions[i * 3], vertexPositions[i * 3 + 1], vertexPositions[i * 3 + 2]);
-            Vector2 textureCoords = TextureAtlasUtils.getTextureAtlasCoords(texture);
-            double uvX = uvs[i * 2] * TextureAtlasUtils.NORMALIZED_TEXTURE_SIZE + textureCoords.getX();
-            double uvY = uvs[i * 2 + 1] * TextureAtlasUtils.NORMALIZED_TEXTURE_SIZE + textureCoords.getY();
+            Vector2 textureCoords = TextureAtlas.getTextureAtlasCoords(texture);
+            double textureSize = (double) TextureAtlas.TEXTURE_SIZE / TextureAtlas.getWidth();
+            double uvX = uvs[i * 2] * textureSize + textureCoords.getX();
+            double uvY = uvs[i * 2 + 1] * textureSize + textureCoords.getY();
             Vector2 uvCoord = new Vector2(uvX, uvY);
             vertices.add(new Vertex(vertexPos, uvCoord));
         }

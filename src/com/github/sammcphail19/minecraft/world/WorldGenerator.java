@@ -27,6 +27,10 @@ public class WorldGenerator {
     }
 
     public BlockType getBlockType(Vector3 blockPos) {
+        if (blockPos.getY() < 4) {
+            return BlockType.BEDROCK;
+        }
+
         double noise = SimplexNoise.noise2(new Vector2(blockPos.getX(), blockPos.getZ()), 0.05, 2, 0.5, 3, 0);
         double height = noise * WORLD_HEIGHT / 1.5;
 
@@ -34,7 +38,11 @@ public class WorldGenerator {
             return BlockType.AIR;
         }
 
-        if (blockPos.getY() == (int) height) {
+        if (blockPos.getY() > height - 1) {
+            return BlockType.GRASS;
+        }
+
+        if (blockPos.getY() > height - 3) {
             return BlockType.DIRT;
         }
 

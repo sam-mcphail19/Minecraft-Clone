@@ -33,7 +33,7 @@ public class Player {
     private long lastUpdateTime = 0;
     private PlayerControl lastPlayerControl;
     private boolean isJumping = false;
-    private boolean inCreativeMode = false;
+    private boolean inCreativeMode = true;
 
     public Player(Vector3 pos) {
         this.pos = pos;
@@ -43,6 +43,11 @@ public class Player {
 
     public void update() {
         getInput();
+    }
+
+    // TODO: return gamemode != spectator
+    public boolean affectedByCollision() {
+        return true;
     }
 
     public void setPos(Vector3 pos) {

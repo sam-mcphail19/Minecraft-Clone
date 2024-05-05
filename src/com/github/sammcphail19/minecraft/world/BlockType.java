@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 public enum BlockType {
     AIR(0, null),
     STONE(1, Texture.STONE),
-    DIRT(2, Texture.DIRT);
+    DIRT(2, Texture.DIRT),
+    GRASS(3, Texture.GRASS),
+    BEDROCK(4, Texture.BEDROCK);
 
     private final int id;
     private final Texture texture;

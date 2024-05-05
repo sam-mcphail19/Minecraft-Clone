@@ -7,7 +7,7 @@ import com.github.sammcphail19.engine.core.Vertex;
 import com.github.sammcphail19.engine.vector.Vector2;
 import com.github.sammcphail19.engine.vector.Vector3I;
 import com.github.sammcphail19.minecraft.graphics.Cube;
-import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlasUtils;
+import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlas;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +56,7 @@ public class Chunk {
         Transform transform = Transform.builder()
             .translation(origin.toVector3())
             .build();
-        this.mesh = new Mesh(vertices, indices.stream().mapToInt(i -> i).toArray(), transform, TextureAtlasUtils.getTexture());
+        this.mesh = new Mesh(vertices, indices.stream().mapToInt(i -> i).toArray(), transform, TextureAtlas.getTexture());
     }
 
     public Vector3I getChunkCoord() {
