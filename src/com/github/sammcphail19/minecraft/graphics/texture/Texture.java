@@ -7,5 +7,6 @@ public enum Texture {
     STONE,
     DIRT,
     GRASS,
+    GRASS_SIDE,
     BEDROCK;
 }

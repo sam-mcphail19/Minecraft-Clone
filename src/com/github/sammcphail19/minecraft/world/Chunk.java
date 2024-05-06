@@ -42,7 +42,7 @@ public class Chunk {
                     Transform transform = Transform.builder()
                         .translation(blockPos.add(origin.toVector3()))
                         .build();
-                    Cube cube = new Cube(transform, block.getTexture());
+                    Cube cube = block.getCubeConstructor().apply(transform);
 
                     for (int index : cube.getIndices()) {
                         indices.add(index + vertices.size());

@@ -15,7 +15,6 @@ import lombok.SneakyThrows;
 
 public class TextureAtlas {
     public static final int TEXTURE_SIZE = 16;
-    public static final double NORMALIZED_TEXTURE_SIZE = 1d / TEXTURE_SIZE;
 
     private static int texturesPerRow;
     private static final Map<String, Vector2> textureMap = new HashMap<>();
@@ -49,7 +48,6 @@ public class TextureAtlas {
                 y += TEXTURE_SIZE;
             }
         }
-        System.out.println(textureMap);
 
         ImageIO.write(result, "png", new File("res/textureAtlas.png"));
     }
@@ -67,11 +65,7 @@ public class TextureAtlas {
         return pos == null ? textureMap.get("PLACEHOLDER") : pos;
     }
 
-    public static int getWidth() {
-        return TEXTURE_SIZE * texturesPerRow;
-    }
-
-    public static int getHeight() {
+    public static int getSize() {
         return TEXTURE_SIZE * texturesPerRow;
     }
 

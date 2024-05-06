@@ -45,7 +45,7 @@ public class World {
             for (int z = -CHUNK_RENDER_DISTANCE; z < CHUNK_RENDER_DISTANCE; z++) {
                 Vector3I pos = currentChunkChunkCoord.add(new Vector3I(x, 0, z));
                 if (!chunks.containsKey(pos)) {
-                    //generateChunk(pos);
+                    generateChunk(pos);
                 }
             }
         }
