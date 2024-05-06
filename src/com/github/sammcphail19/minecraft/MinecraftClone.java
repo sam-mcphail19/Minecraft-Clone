@@ -3,9 +3,11 @@ package com.github.sammcphail19.minecraft;
 import com.github.sammcphail19.engine.Application;
 import com.github.sammcphail19.engine.core.Input;
 import com.github.sammcphail19.engine.vector.Vector3;
+import com.github.sammcphail19.engine.vector.Vector3I;
 import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlas;
 import com.github.sammcphail19.minecraft.world.World;
 import com.github.sammcphail19.minecraft.world.WorldGenerator;
+import java.util.Objects;
 import lombok.Getter;
 import org.lwjgl.glfw.GLFW;
 
@@ -32,8 +34,19 @@ public class MinecraftClone extends Application {
 
         this.world = new World(new WorldGenerator(), player);
         world.generate();
-        world.getChunks().values().forEach(chunk -> submitMesh(chunk.getMesh()));
+        world.getChunks().values().stream()
+            .filter(Objects::nonNull)
+            .forEach(chunk -> submitMesh(chunk.getMesh()));
 
+        Vector3I currentChunksChunkCoord = new Vector3I();
+        while(world.getChunks().get(currentChunksChunkCoord) == null) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                System.out.println("Main thread interrupted");
+                System.exit(1);
+            }
+        }
         int height = world.getHeightAtPos(player.getPos());
         Vector3 newPos = new Vector3(player.getPos().getX(), height + 1, player.getPos().getZ());
         player.setPos(newPos);

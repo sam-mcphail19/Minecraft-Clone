@@ -12,10 +12,12 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @AllArgsConstructor
 public class World {
@@ -88,6 +90,7 @@ public class World {
     public List<Chunk> getVisibleChunks() {
         Vector3 playerPos = new Vector3(player.getPos().getX(), 0, player.getPos().getZ());
         return chunks.values().stream()
+            .filter(Objects::nonNull)
             .filter(chunk -> playerPos.subtract(chunk.getCenter().toVector3()).magnitude() < CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE)
             .toList();
     }
@@ -124,9 +127,9 @@ public class World {
     }
 
     private void generateChunk(Vector3I chunkCoord) {
-        System.out.println("Generating chunk at " + chunkCoord);
-        Chunk chunk = worldGenerator.generateChunk(chunkCoord);
-        chunks.put(chunk.getChunkCoord(), chunk);
+        // A temp value, so that we don't create multiple threads to generate the same chunk
+        chunks.put(chunkCoord, null);
+        new ChunkGenerator(chunkCoord).start();
     }
 
     private Set<Vector3I> getBlocksNearPlayer(Player player) {
@@ -198,5 +201,17 @@ public class World {
         }
 
         return false;
+    }
+
+    @RequiredArgsConstructor
+    private class ChunkGenerator extends Thread {
+
+        private final Vector3I chunkCoord;
+        @Override
+        public void run() {
+            System.out.println("Generating chunk at " + chunkCoord);
+            Chunk chunk = worldGenerator.generateChunk(chunkCoord);
+            chunks.put(chunkCoord, chunk);
+        }
     }
 }

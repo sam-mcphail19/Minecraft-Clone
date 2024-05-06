@@ -50,6 +50,8 @@ public class TextureAtlas {
         }
 
         ImageIO.write(result, "png", new File("res/textureAtlas.png"));
+
+        getTexture();
     }
 
     public static com.github.sammcphail19.engine.core.Texture getTexture() {
