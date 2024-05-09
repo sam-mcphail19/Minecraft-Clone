@@ -2,9 +2,13 @@ package com.github.sammcphail19.minecraft;
 
 import com.github.sammcphail19.engine.Application;
 import com.github.sammcphail19.engine.core.Input;
+import com.github.sammcphail19.engine.core.Texture;
+import com.github.sammcphail19.engine.core.Transform;
 import com.github.sammcphail19.engine.vector.Vector3;
 import com.github.sammcphail19.engine.vector.Vector3I;
+import com.github.sammcphail19.minecraft.graphics.Quad;
 import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlas;
+import com.github.sammcphail19.minecraft.world.Direction;
 import com.github.sammcphail19.minecraft.world.World;
 import com.github.sammcphail19.minecraft.world.WorldGenerator;
 import java.util.Objects;
@@ -27,19 +31,18 @@ public class MinecraftClone extends Application {
         super("Minecraft clone");
 
         this.player = new Player(new Vector3(8, 65, 8));
-
-        setCamera(player.getCamera());
+        this.camera = player.getCamera();
 
         TextureAtlas.initialize();
 
-        this.world = new World(new WorldGenerator(), player);
+        this.world = new World(new WorldGenerator(), player, shader, null);
         world.generate();
         world.getChunks().values().stream()
-            .filter(Objects::nonNull)
-            .forEach(chunk -> submitMesh(chunk.getMesh()));
+            .filter(chunk -> chunk != null && chunk.getMesh() != null)
+            .forEach(chunk -> renderer.submitPerspectiveMesh(chunk.getMesh()));
 
         Vector3I currentChunksChunkCoord = new Vector3I();
-        while(world.getChunks().get(currentChunksChunkCoord) == null) {
+        while (world.getChunks().get(currentChunksChunkCoord) == null) {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -65,7 +68,15 @@ public class MinecraftClone extends Application {
 
             clearMeshes();
             world.update();
-            world.getVisibleChunks().forEach(chunk -> submitMesh(chunk.getMesh()));
+            world.getVisibleChunks().stream()
+                .filter(chunk -> chunk != null && chunk.getMesh() != null)
+                .forEach(chunk -> renderer.submitPerspectiveMesh(chunk.getMesh()));
+            Transform crosshairTransform = Transform.builder()
+                .translation(new Vector3(-0.5, -0.5, 0))
+                .scale(new Vector3(9d/16d, 1, 1).multiply(0.05))
+                .build();
+            Quad crosshair = Quad.quad(crosshairTransform, Texture.load("res/texture/crosshair.png"));
+            renderer.submitOrthoMesh(crosshair);
 
             ticks++;
         }
