@@ -21,7 +21,7 @@ public class TextureAtlas {
 
     @SneakyThrows
     public static void initialize() {
-        List<Path> paths = Files.walk(Paths.get("res/texture"))
+        List<Path> paths = Files.walk(Paths.get("res/texture/texture_atlas"))
             .filter(Files::isRegularFile)
             .toList();
 

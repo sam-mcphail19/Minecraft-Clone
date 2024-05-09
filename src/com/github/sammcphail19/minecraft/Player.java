@@ -5,9 +5,7 @@ import com.github.sammcphail19.engine.core.Input;
 import com.github.sammcphail19.engine.physics.BoxCollider;
 import com.github.sammcphail19.engine.vector.Vector2;
 import com.github.sammcphail19.engine.vector.Vector3;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Setter;
 import org.lwjgl.glfw.GLFW;
 
 @Data
@@ -31,7 +29,7 @@ public class Player {
     private double yaw = 0;
     private Vector2 mousePos = Input.getMousePos();
     private long lastUpdateTime = 0;
-    private PlayerControl lastPlayerControl;
+    private PlayerControl playerControl;
     private boolean isJumping = false;
     private boolean inCreativeMode = true;
 
@@ -57,22 +55,22 @@ public class Player {
 
     private void getInput() {
         if (inCreativeMode) {
-            lastPlayerControl = getCreativePlayerControl();
-            velocity.setY(lastPlayerControl.getMovement().getY());
+            playerControl = getCreativePlayerControl();
+            velocity.setY(playerControl.getMovement().getY());
         } else {
-            lastPlayerControl = getPlayerControl();
-            velocity = velocity.add(new Vector3(0, lastPlayerControl.getMovement().getY(), 0));
+            playerControl = getPlayerControl();
+            velocity = velocity.add(new Vector3(0, playerControl.getMovement().getY(), 0));
 
             if (isJumping) {
                 velocity = velocity.subtract(new Vector3(0, GRAVITY, 0));
             }
         }
 
-        velocity.setX(lastPlayerControl.getMovement().getX());
-        velocity.setZ(lastPlayerControl.getMovement().getZ());
+        velocity.setX(playerControl.getMovement().getX());
+        velocity.setZ(playerControl.getMovement().getZ());
 
-        addPitch(lastPlayerControl.getPitch());
-        addYaw(lastPlayerControl.getYaw());
+        addPitch(playerControl.getPitch());
+        addYaw(playerControl.getYaw());
 
         camera.setPitch(pitch);
         camera.setYaw(yaw);
@@ -82,11 +80,9 @@ public class Player {
     private PlayerControl getPlayerControl() {
         double oldY = mousePos.getY();
         double oldX = mousePos.getX();
-        mousePos = Input.getMousePos().copy();
+        mousePos = new Vector2(Input.getMousePos());
 
         double pitch = (mousePos.getY() - oldY) * MOUSE_SENSITIVITY;
-        pitch = pitch < 90f && pitch > -90f ? pitch : 0;
-
         double yaw = (mousePos.getX() - oldX) * MOUSE_SENSITIVITY;
 
         Vector3 viewDir = calculateViewDirection();
@@ -121,11 +117,9 @@ public class Player {
     private PlayerControl getCreativePlayerControl() {
         double oldY = mousePos.getY();
         double oldX = mousePos.getX();
-        mousePos = Input.getMousePos().copy();
+        mousePos = new Vector2(Input.getMousePos());
 
         double pitch = (mousePos.getY() - oldY) * MOUSE_SENSITIVITY;
-        pitch = pitch < 90f && pitch > -90f ? pitch : 0;
-
         double yaw = (mousePos.getX() - oldX) * MOUSE_SENSITIVITY;
 
         Vector3 viewDir = calculateViewDirection();
@@ -168,19 +162,22 @@ public class Player {
 
     public void addYaw(double yaw) {
         this.yaw += yaw;
-
-        if (this.yaw > 360 || this.yaw < -360) {
-            this.yaw = 0;
+        if (this.yaw > 360) {
+            this.yaw -= 360;
         }
+        if (this.yaw < 0) {
+            this.yaw += 360;
+        }
+
         camera.setYaw(this.yaw);
     }
 
     private Vector3 calculateViewDirection() {
-        return new Vector3(
-            Math.sin(Math.toRadians(yaw)),
-            0,
-            -Math.cos(Math.toRadians(yaw)) // inverted because yaw=0 points towards -z
-        );
+        double cameraPitch = camera.getPitch();
+        camera.setPitch(0);
+        Vector3 viewDir = camera.getViewDirection();
+        camera.setPitch(cameraPitch);
+        return viewDir;
     }
 
     private Vector3 calculateStrafeDirection(Vector3 viewDir) {
