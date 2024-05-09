@@ -11,12 +11,10 @@ import com.github.sammcphail19.minecraft.graphics.CubeConstructorParams;
 import com.github.sammcphail19.minecraft.graphics.Quad;
 import com.github.sammcphail19.minecraft.graphics.texture.TextureAtlas;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +26,7 @@ public class Chunk {
 
     private final Vector3I origin;
     private final World world;
-    private final BlockType[] blocks = new BlockType[CHUNK_SIZE * CHUNK_SIZE * World.WORLD_HEIGHT];
+    private final int[] blocks = new int[CHUNK_SIZE * CHUNK_SIZE * World.WORLD_HEIGHT];
 
     private Mesh mesh;
     private Map<Vector3I, List<Integer>> blockToVerticesMap = new HashMap<>();
@@ -102,8 +100,12 @@ public class Chunk {
         return new Vector3I(origin.getX() / CHUNK_SIZE, 0, origin.getZ() / CHUNK_SIZE);
     }
 
-    public void putBlock(int x, int y, int z, BlockType blockType) {
+    public void putBlock(int x, int y, int z, int blockType) {
         this.blocks[to1DIndex(x, y, z)] = blockType;
+    }
+
+    public void putBlock(int i, int blockType) {
+        this.blocks[i] = blockType;
     }
 
     public BlockType getBlock(Vector3I blockPos) {
@@ -111,7 +113,7 @@ public class Chunk {
             return BlockType.AIR;
         }
         try {
-            return this.blocks[to1DIndex(blockPos.getX(), blockPos.getY(), blockPos.getZ())];
+            return BlockType.getBlockType(this.blocks[to1DIndex(blockPos.getX(), blockPos.getY(), blockPos.getZ())]);
         } catch (ArrayIndexOutOfBoundsException e) {
             System.err.println("ArrayIndexOutOfBoundsException for " + "(" + blockPos.getX() + "," + blockPos.getY() + "," + blockPos.getZ() + ")");
             throw e;
@@ -139,24 +141,24 @@ public class Chunk {
         return origin.add(CHUNK_HALF);
     }
 
+    public static int to1DIndex(int x, int y, int z) {
+        return x + (CHUNK_SIZE * y) + (z * CHUNK_SIZE * World.WORLD_HEIGHT);
+    }
+
+    public static Vector3I to3DIndex(int i) {
+        int z = i / (CHUNK_SIZE * World.WORLD_HEIGHT);
+        i -= (z * CHUNK_SIZE * World.WORLD_HEIGHT);
+        int y = i / CHUNK_SIZE;
+        int x = i % CHUNK_SIZE;
+        return new Vector3I(x, y, z);
+    }
+
     private void addToBlockToVerticesMap(Vector3I blockPos, int i) {
         if (blockToVerticesMap.containsKey(blockPos)) {
             blockToVerticesMap.get(blockPos).add(i);
         } else {
             blockToVerticesMap.put(blockPos, new LinkedList<>(List.of(i)));
         }
-    }
-
-    private int to1DIndex(int x, int y, int z) {
-        return x + (CHUNK_SIZE * y) + (z * CHUNK_SIZE * World.WORLD_HEIGHT);
-    }
-
-    private Vector3I to3DIndex(int i) {
-        int z = i / (CHUNK_SIZE * World.WORLD_HEIGHT);
-        i -= (z * CHUNK_SIZE * World.WORLD_HEIGHT);
-        int y = i / CHUNK_SIZE;
-        int x = i % CHUNK_SIZE;
-        return new Vector3I(x, y, z);
     }
 
     private boolean faceIsVisible(Vector3I pos, Direction direction) {

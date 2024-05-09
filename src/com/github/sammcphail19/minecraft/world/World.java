@@ -1,6 +1,5 @@
 package com.github.sammcphail19.minecraft.world;
 
-import com.github.sammcphail19.engine.core.Input;
 import com.github.sammcphail19.engine.physics.BoxCollider;
 import com.github.sammcphail19.engine.physics.Collision;
 import com.github.sammcphail19.engine.shader.Shader;
@@ -21,12 +20,11 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.lwjgl.glfw.GLFW;
 
 @AllArgsConstructor
 public class World {
     public static final int WORLD_HEIGHT = 128;
-    private static final int CHUNK_RENDER_DISTANCE = 4;
+    private static final int CHUNK_RENDER_DISTANCE = 12;
 
     @Getter
     private final Map<Vector3I, Chunk> chunks = new HashMap<>();

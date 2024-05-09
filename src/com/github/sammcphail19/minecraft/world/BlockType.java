@@ -3,7 +3,10 @@ package com.github.sammcphail19.minecraft.world;
 import com.github.sammcphail19.minecraft.graphics.Cube;
 import com.github.sammcphail19.minecraft.graphics.CubeConstructorParams;
 import com.github.sammcphail19.minecraft.graphics.texture.Texture;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -18,4 +21,11 @@ public enum BlockType {
 
     private final int id;
     private final Function<CubeConstructorParams, Cube> cubeConstructor;
+
+    private final static Map<Integer, BlockType> blockTypeMap = Arrays.stream(values())
+        .collect(Collectors.toMap(BlockType::getId, Function.identity()));
+
+    public static BlockType getBlockType(int id) {
+        return blockTypeMap.get(id);
+    }
 }
