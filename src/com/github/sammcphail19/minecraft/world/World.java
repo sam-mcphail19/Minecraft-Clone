@@ -24,7 +24,8 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 public class World {
     public static final int WORLD_HEIGHT = 128;
-    private static final int CHUNK_RENDER_DISTANCE = 4;
+    private static final int CHUNK_RENDER_DISTANCE = 8;
+    private static final int CHUNK_RENDER_DISTANCE_IN_BLOCKS = CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE;
 
     @Getter
     private final Map<Vector3I, Chunk> chunks = new HashMap<>();
@@ -105,21 +106,39 @@ public class World {
     }
 
     public List<Chunk> getVisibleChunks() {
+        Vector3I playerPos = new Vector3I(player.getPos());
         return chunks.values().stream()
             .filter(Objects::nonNull)
-            .filter(chunk -> chunkIsVisible(player, chunk))
+            .filter(chunk -> chunkIsVisible(playerPos, chunk))
             .toList();
     }
 
-    private boolean chunkIsVisible(Player player, Chunk chunk) {
-        Vector3 chunkCenter = chunk.getCenter().toVector3();
-        double chunkDistance = player.getPos().subtract(chunkCenter).magnitude();
-        if (chunkDistance < CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE) {
-            return true;
+    private boolean chunkIsVisible(Vector3I playerPos, Chunk chunk) {
+        Vector3I chunkOrigin = chunk.getOrigin();
+        int chunkCenterX = chunkOrigin.getX() + Chunk.CHUNK_SIZE / 2;
+        int chunkCenterZ = chunkOrigin.getZ() + Chunk.CHUNK_SIZE / 2;
+        if (chunk.containsSurfaceBlocks()) {
+            if (Math.abs(chunkCenterX - playerPos.getX()) > CHUNK_RENDER_DISTANCE_IN_BLOCKS ||
+                Math.abs(chunkCenterZ - playerPos.getZ()) > CHUNK_RENDER_DISTANCE_IN_BLOCKS) {
+                return false;
+            }
+            int x = playerPos.getX() - chunkCenterX;
+            int z = playerPos.getZ() - chunkCenterZ;
+            return Math.sqrt(x * x + z * z) < CHUNK_RENDER_DISTANCE_IN_BLOCKS;
         }
 
-        double chunkHorizontalDistance = new Vector3(player.getPos()).withY(0).subtract(chunkCenter.withY(0)).magnitude();
-        return chunk.containsSurfaceBlocks() && chunkHorizontalDistance < CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE;
+        int chunkCenterY = chunkOrigin.getY() + Chunk.CHUNK_HEIGHT / 2;
+
+        if (Math.abs(chunkCenterX - playerPos.getX()) > CHUNK_RENDER_DISTANCE_IN_BLOCKS ||
+            Math.abs(chunkCenterY - playerPos.getY()) > CHUNK_RENDER_DISTANCE_IN_BLOCKS ||
+            Math.abs(chunkCenterZ - playerPos.getZ()) > CHUNK_RENDER_DISTANCE_IN_BLOCKS) {
+            return false;
+        }
+
+        int x = playerPos.getX() - chunkCenterX;
+        int y = playerPos.getY() - chunkCenterY;
+        int z = playerPos.getZ() - chunkCenterZ;
+        return Math.sqrt(x * x + y * y + z * z) < CHUNK_RENDER_DISTANCE_IN_BLOCKS;
     }
 
     public List<Collision> checkPlayerCollisions(Player player) {
@@ -269,9 +288,9 @@ public class World {
         Set<Vector3I> alreadyCheckedBlocks = new HashSet<>();
 
         do {
-            int x = (int) position.getX();
-            int y = (int) position.getY();
-            int z = (int) position.getZ();
+            int x = position.getX() > 0 ? (int) position.getX() : (int) position.getX() - 1;
+            int y = position.getY() > 0 ? (int) position.getY() : (int) position.getY() - 1;
+            int z = position.getZ() > 0 ? (int) position.getZ() : (int) position.getZ() - 1;
             Vector3I blockPos = new Vector3I(x, y, z);
 
             if (alreadyCheckedBlocks.contains(blockPos)) {
