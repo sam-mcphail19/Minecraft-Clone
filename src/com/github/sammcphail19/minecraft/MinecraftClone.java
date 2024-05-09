@@ -53,6 +53,7 @@ public class MinecraftClone extends Application {
         int height = world.getHeightAtPos(player.getPos());
         Vector3 newPos = new Vector3(player.getPos().getX(), height + 1, player.getPos().getZ());
         player.setPos(newPos);
+        System.out.println("Player pos:" + newPos);
     }
 
     @Override

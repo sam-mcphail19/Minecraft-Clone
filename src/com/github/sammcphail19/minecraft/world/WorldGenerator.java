@@ -5,12 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WorldGenerator {
-    private static final int BLOCKS_PER_CHUNK = Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * World.WORLD_HEIGHT;
+    private static final int BLOCKS_PER_CHUNK = Chunk.CHUNK_SIZE * Chunk.CHUNK_SIZE * Chunk.CHUNK_HEIGHT;
     private final Map<Integer, Integer> heightMap = new HashMap<>();
 
     public Chunk generateChunkData(World world, Vector3I chunkCoord) {
-        chunkCoord.setY(0);
-        Vector3I chunkOrigin = chunkCoord.multiply(Chunk.CHUNK_SIZE);
+        Vector3I chunkOrigin = new Vector3I(
+            chunkCoord.getX() * Chunk.CHUNK_SIZE,
+            chunkCoord.getY() * Chunk.CHUNK_HEIGHT,
+            chunkCoord.getZ() * Chunk.CHUNK_SIZE
+        );
         Chunk chunk = new Chunk(chunkOrigin, world);
 
         for (int i = 0; i < BLOCKS_PER_CHUNK; i++) {

@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 public class World {
     public static final int WORLD_HEIGHT = 128;
-    private static final int CHUNK_RENDER_DISTANCE = 12;
+    private static final int CHUNK_RENDER_DISTANCE = 4;
 
     @Getter
     private final Map<Vector3I, Chunk> chunks = new HashMap<>();
@@ -36,19 +36,26 @@ public class World {
     private Vector3I selectedBlock;
 
     public void generate() {
-        generateChunk(new Vector3I(0, 0, 0));
-        generateChunk(new Vector3I(1, 0, 0));
+        for (int y = 0; y < WORLD_HEIGHT / Chunk.CHUNK_HEIGHT; y++) {
+            generateChunk(new Vector3I(0, y, 0));
+            generateChunk(new Vector3I(1, y, 0));
+        }
     }
 
     public void update() {
         player.update();
 
         Vector3I currentChunkChunkCoord = getChunkCoord(new Vector3I(player.getPos()));
+        int yStart = Math.max(currentChunkChunkCoord.getY() - CHUNK_RENDER_DISTANCE, 0);
+        int yEnd = Math.min(currentChunkChunkCoord.getY() + CHUNK_RENDER_DISTANCE, WORLD_HEIGHT);
         for (int x = -CHUNK_RENDER_DISTANCE; x < CHUNK_RENDER_DISTANCE; x++) {
-            for (int z = -CHUNK_RENDER_DISTANCE; z < CHUNK_RENDER_DISTANCE; z++) {
-                Vector3I pos = currentChunkChunkCoord.add(new Vector3I(x, 0, z));
-                if (!chunks.containsKey(pos)) {
-                    generateChunk(pos);
+            for (int y = yStart; y < yEnd; y++) {
+                for (int z = -CHUNK_RENDER_DISTANCE; z < CHUNK_RENDER_DISTANCE; z++) {
+                    Vector3I pos = currentChunkChunkCoord.add(new Vector3I(x, 0, z));
+                    pos.setY(y);
+                    if (!chunks.containsKey(pos)) {
+                        generateChunk(pos);
+                    }
                 }
             }
         }
@@ -98,11 +105,21 @@ public class World {
     }
 
     public List<Chunk> getVisibleChunks() {
-        Vector3 playerPos = new Vector3(player.getPos().getX(), 0, player.getPos().getZ());
         return chunks.values().stream()
             .filter(Objects::nonNull)
-            .filter(chunk -> playerPos.subtract(chunk.getCenter().toVector3()).magnitude() < CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE)
+            .filter(chunk -> chunkIsVisible(player, chunk))
             .toList();
+    }
+
+    private boolean chunkIsVisible(Player player, Chunk chunk) {
+        Vector3 chunkCenter = chunk.getCenter().toVector3();
+        double chunkDistance = player.getPos().subtract(chunkCenter).magnitude();
+        if (chunkDistance < CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE) {
+            return true;
+        }
+
+        double chunkHorizontalDistance = new Vector3(player.getPos()).withY(0).subtract(chunkCenter.withY(0)).magnitude();
+        return chunk.containsSurfaceBlocks() && chunkHorizontalDistance < CHUNK_RENDER_DISTANCE * Chunk.CHUNK_SIZE;
     }
 
     public List<Collision> checkPlayerCollisions(Player player) {
@@ -127,13 +144,23 @@ public class World {
     }
 
     public int getHeightAtPos(Vector3 pos) {
-        Chunk chunk = getChunk(pos);
-        if (chunk == null) {
-            return -1;
+        Vector3I chunkCoord = getChunkCoord(pos);
+
+        for (int y = WORLD_HEIGHT / Chunk.CHUNK_HEIGHT; y > 0; y--) {
+            chunkCoord.setY(y);
+            Chunk chunk = chunks.get(chunkCoord);
+            if (chunk == null) {
+                continue;
+            }
+
+            Vector3 localPos = worldPosToLocalPos(pos);
+            int height = chunk.getHeightAtPos((int) localPos.getX(), (int) localPos.getZ());
+            if (height > 0) {
+                return height + chunk.getOrigin().getY();
+            }
         }
 
-        Vector3 localPos = worldPosToLocalPos(pos);
-        return chunk.getHeightAtPos(new Vector2(localPos.getX(), localPos.getZ()));
+        return -1;
     }
 
     public BlockType getBlock(Vector3I blockPos) {
@@ -164,6 +191,7 @@ public class World {
         }
 
         return blocks.stream()
+            .filter(block -> block.getY() > 0 && block.getY() < WORLD_HEIGHT)
             .filter(block -> {
                 Chunk chunk = getChunk(block);
                 return chunk != null && !BlockType.AIR.equals(chunk.getBlock(worldPosToLocalPos(block)));
@@ -183,9 +211,16 @@ public class World {
     // Get the chunk coord of the chunk that contains the given world coordinate
     private Vector3I getChunkCoord(Vector3I pos) {
         int x = Math.floorDiv(pos.getX(), Chunk.CHUNK_SIZE);
+        int y = Math.floorDiv(pos.getY(), Chunk.CHUNK_HEIGHT);
         int z = Math.floorDiv(pos.getZ(), Chunk.CHUNK_SIZE);
 
-        return new Vector3I(x, 0, z);
+        y = Math.max(y, 0);
+
+        return new Vector3I(x, y, z);
+    }
+
+    private Vector3I getChunkCoord(Vector3 pos) {
+        return getChunkCoord(new Vector3I(pos));
     }
 
     public Vector3 worldPosToLocalPos(Vector3 worldPos) {
@@ -200,8 +235,9 @@ public class World {
 
         x %= Chunk.CHUNK_SIZE;
         z %= Chunk.CHUNK_SIZE;
+        double y = worldPos.getY() % Chunk.CHUNK_HEIGHT;
 
-        return new Vector3(x, worldPos.getY(), z);
+        return new Vector3(x, y, z);
     }
 
     public Vector3 worldPosToLocalPos(Vector3I worldPos) {

@@ -22,14 +22,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class Chunk {
     public static final int CHUNK_SIZE = 16;
-    private static final Vector3I CHUNK_HALF = new Vector3I(CHUNK_SIZE / 2, 0, CHUNK_SIZE / 2);
+    public static final int CHUNK_HEIGHT = 32;
+    private static final Vector3I CHUNK_HALF = new Vector3I(CHUNK_SIZE / 2, CHUNK_HEIGHT / 2, CHUNK_SIZE / 2);
 
     private final Vector3I origin;
     private final World world;
-    private final int[] blocks = new int[CHUNK_SIZE * CHUNK_SIZE * World.WORLD_HEIGHT];
+    private final int[] blocks = new int[CHUNK_SIZE * CHUNK_SIZE * CHUNK_HEIGHT];
 
     private Mesh mesh;
     private Map<Vector3I, List<Integer>> blockToVerticesMap = new HashMap<>();
+    private boolean containsSurfaceBlocks = false;
 
     public void updateMesh() {
         List<Vertex> vertices = new ArrayList<>();
@@ -55,6 +57,10 @@ public class Chunk {
                     continue;
                 }
 
+                if (face.getKey() == Direction.TOP) {
+                    containsSurfaceBlocks = true;
+                }
+
                 for (int index : face.getValue().getIndices()) {
                     indices.add(index + vertices.size());
                 }
@@ -71,6 +77,10 @@ public class Chunk {
             .translation(origin.toVector3())
             .build();
         this.mesh = new Mesh(vertices, indices.stream().mapToInt(i -> i).toArray(), transform, TextureAtlas.getTexture());
+    }
+
+    public boolean containsSurfaceBlocks() {
+        return containsSurfaceBlocks;
     }
 
     public void highlightSelectedBlock() {
@@ -97,7 +107,7 @@ public class Chunk {
     }
 
     public Vector3I getChunkCoord() {
-        return new Vector3I(origin.getX() / CHUNK_SIZE, 0, origin.getZ() / CHUNK_SIZE);
+        return new Vector3I(origin.getX() / CHUNK_SIZE, origin.getY() / CHUNK_HEIGHT, origin.getZ() / CHUNK_SIZE);
     }
 
     public void putBlock(int x, int y, int z, int blockType) {
@@ -109,13 +119,13 @@ public class Chunk {
     }
 
     public BlockType getBlock(Vector3I blockPos) {
-        if (blockPos.getY() < 0 || blockPos.getY() > World.WORLD_HEIGHT - 1) {
+        if (blockPos.getY() < 0 || blockPos.getY() > CHUNK_HEIGHT - 1) {
             return BlockType.AIR;
         }
         try {
             return BlockType.getBlockType(this.blocks[to1DIndex(blockPos.getX(), blockPos.getY(), blockPos.getZ())]);
         } catch (ArrayIndexOutOfBoundsException e) {
-            System.err.println("ArrayIndexOutOfBoundsException for " + "(" + blockPos.getX() + "," + blockPos.getY() + "," + blockPos.getZ() + ")");
+            System.err.println("ArrayIndexOutOfBoundsException for " + blockPos);
             throw e;
         }
     }
@@ -124,14 +134,17 @@ public class Chunk {
         return getBlock(new Vector3I(blockPos));
     }
 
-    public int getHeightAtPos(Vector2 pos) {
-        int x = (int) pos.getX();
-        int z = (int) pos.getY();
-
-        for (int y = World.WORLD_HEIGHT - 1; y >= 0; y--) {
+    public int getHeightAtPos(int x, int z) {
+        System.out.println(origin);
+        System.out.println(x + ", " + z);
+        for (int y = CHUNK_HEIGHT - 1; y >= 0; y--) {
             if (getBlock(new Vector3I(x, y, z)) != BlockType.AIR) {
                 return y;
             }
+        }
+
+        for (int y = CHUNK_HEIGHT - 1; y >= 0; y--) {
+            System.out.println(new Vector3I(x, y, z));
         }
 
         return -1;
@@ -142,12 +155,12 @@ public class Chunk {
     }
 
     public static int to1DIndex(int x, int y, int z) {
-        return x + (CHUNK_SIZE * y) + (z * CHUNK_SIZE * World.WORLD_HEIGHT);
+        return x + (CHUNK_SIZE * y) + (z * CHUNK_SIZE * CHUNK_HEIGHT);
     }
 
     public static Vector3I to3DIndex(int i) {
-        int z = i / (CHUNK_SIZE * World.WORLD_HEIGHT);
-        i -= (z * CHUNK_SIZE * World.WORLD_HEIGHT);
+        int z = i / (CHUNK_SIZE * CHUNK_HEIGHT);
+        i -= (z * CHUNK_SIZE * CHUNK_HEIGHT);
         int y = i / CHUNK_SIZE;
         int x = i % CHUNK_SIZE;
         return new Vector3I(x, y, z);
@@ -168,7 +181,7 @@ public class Chunk {
             neighbourPos.getZ() >= 0 &&
             neighbourPos.getZ() < CHUNK_SIZE &&
             neighbourPos.getY() >= 0 &&
-            neighbourPos.getY() < World.WORLD_HEIGHT;
+            neighbourPos.getY() < CHUNK_HEIGHT;
 
         BlockType neighbour = neighbourIsInThisChunk ? getBlock(neighbourPos) : world.getBlock(neighbourPos.add(origin));
         return neighbour == null || BlockType.AIR.equals(neighbour);
